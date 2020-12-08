@@ -55,7 +55,7 @@ All code in this repository is licensed under a MIT License.
 The dataset is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
 """
 
-_DOWNLOAD_URL = "https://github.com/benjaminvdb/DBRD/releases/download/v3.0/DBRD_v3.tgz"
+_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1k5UMoqoB3RT4kK9FI5Xyl7RmWWyBSwux"
 
 _TRAIN_FILE = "train.jsonl"
 _VAL_FILE = "val.jsonl"
@@ -102,7 +102,7 @@ class DBRDDataset(datasets.GeneratorBasedBuilder):
         # the data is splitted in 3 directories: train, test and unsup (which means unsupervised, i.e.
         # the remaining reviews). 
         arch_path = dl_manager.download_and_extract(_DOWNLOAD_URL)
-        data_dir = os.path.join(arch_path, "110kDBRD")
+        data_dir = os.path.join(arch_path, "DBRD")
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN, gen_kwargs={"directory": os.path.join(data_dir, "train")}
