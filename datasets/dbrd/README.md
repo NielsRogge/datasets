@@ -33,16 +33,16 @@
 
 ### Dataset Summary
 
-The DBRD (pronounced dee-bird) dataset contains over 110k book reviews along with associated binary sentiment polarity labels. It is greatly influenced by the Large Movie Review Dataset and intended as a benchmark for sentiment classification in Dutch. The scripts that were used to scrape the reviews from Hebban can be found in the DBRD [GitHub repository](https://github.com/benjaminvdb/DBRD).
+The DBRD (pronounced dee-bird) dataset contains over 110k book reviews along with associated binary sentiment polarity labels. It is greatly influenced by the [Large Movie Review Dataset](http://ai.stanford.edu/~amaas/data/sentiment/) and intended as a benchmark for sentiment classification in Dutch. The reviews were scraped from the Dutch [Hebban](https://www.hebban.nl/) website using scripts which can be found in the DBRD [GitHub repository](https://github.com/benjaminvdb/DBRD).
 
 ### Supported Tasks and Leaderboards
 
-- `text-classification`: The dataset can be used to train a model for text classification, which consists in classifying whether a given review is positive or negative. Success on this task is typically measured by achieving a *high* [accuracy](https://huggingface.co/metrics/accuracy) or *high* [f1](https://huggingface.co/metrics/f1). The RobBERT model currently achieves an accuracy and f1 of 94.422%. The base model can be found in the HuggingFace [model hub](https://huggingface.co/pdelobelle/robbert-v2-dutch-base).
+- `text-classification`: The dataset can be used to train a model for text classification, which consists in classifying whether a given review is positive or negative. Success on this task is typically measured by achieving a *high* [accuracy](https://huggingface.co/metrics/accuracy) or *high* [f1](https://huggingface.co/metrics/f1). The RobBERT model currently achieves an accuracy and f1 of 95.144%%. The base model can be found in the HuggingFace [model hub](https://huggingface.co/pdelobelle/robbert-v2-dutch-base).
 - This task has an active (but unofficial) leaderboard which can be found at [Papers with Code](https://paperswithcode.com/sota/sentiment-analysis-on-dbrd) and ranks models based on [accuracy](https://huggingface.co/metrics/accuracy) and [f1](https://huggingface.co/metrics/f1).
 
 ### Language
 
-Dutch
+Dutch (nl)
 
 ## Dataset Structure
 
@@ -74,7 +74,8 @@ A typical example looks like this:
 
 ### Data Fields
 
-[More Information Needed]
+Each review is a txt file, identified as `[ID]_[RATING].txt`. The label can be deduced from the rating. Positive reviews have a 4 or 5 as rating, whereas negative reviews have a one or two. The remaining neutral reviews have a rating of 3. 
+
 
 ### Data Splits
 
@@ -105,7 +106,20 @@ This dataset was created for testing out the [ULMFiT](https://arxiv.org/abs/1801
 
 #### Initial Data Collection and Normalization
 
-The data is scrapted from the [Hebban](https://www.hebban.nl/) website. The scripts that were used for scraping can be found on the DBRD [Github repository](https://github.com/benjaminvdb/DBRD).
+The data is scrapted from the [Hebban](https://www.hebban.nl/) website. The scripts that were used for scraping can be found on the DBRD [Github repository](https://github.com/benjaminvdb/DBRD). The only filtering happens in the third script as shown below. By default, the number of reviews is limited to 110k and some reviews with invalid dates are filtered out.
+
+```
+Usage: post_process.py [OPTIONS] INFILE OUTDIR
+
+Options:
+  --encoding TEXT              Input file encoding
+  --keep-incorrect-date TEXT   Whether to keep reviews with invalid dates.
+  --sort TEXT                  Whether to sort reviews by date.
+  --maximum INTEGER            Maximum number of reviews in output
+  --valid-size-fraction FLOAT  Fraction of total to set aside as validation.
+  --shuffle TEXT               Shuffle data before saving.
+  --help                       Show this message and exit.
+```
 
 #### Who are the source language producers?
 
@@ -115,35 +129,35 @@ The reviews are written by people who like to write a book review on the website
 
 #### Annotation process
 
-[More Information Needed]
+The reviews are scraped from the website of [Hebban website](https://www.hebban.nl/) using a script, and the labels are based on the stars which are given for a given review. One or two stars means a review is labelled as "negative", four or five stars means a review is labelled as "positive".
 
 #### Who are the annotators?
 
-[More Information Needed]
+Benjamin van der Burgh has created this dataset to learn more about deep learning.
 
 ### Personal and Sensitive Information
 
-[More Information Needed]
+The reviews are not filtered, meaning they can possibly contain harmful or offensive language. 
 
 ## Considerations for Using the Data
 
 ### Social Impact of Dataset
 
-[More Information Needed]
+One should consider whether the sentiment given in book reviews reflects the sentiment in another domain. Be careful to use this model in another domain, as the language to express sentiment can be different. 
 
 ### Discussion of Biases
 
-[More Information Needed]
+N/A
 
 ### Other Known Limitations
 
-[More Information Needed]
+N/A
 
 ## Additional Information
 
 ### Dataset Curators
 
-[More Information Needed]
+The reviews are written by people on the website of [Hebban](https://www.hebban.nl/).
 
 ### Licensing Information
 
