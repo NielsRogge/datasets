@@ -4,40 +4,376 @@
 
 🤗 Datasets relies on two main classes during the dataset building process: [`DatasetBuilder`] and [`BuilderConfig`].
 
-[[autodoc]] datasets.DatasetBuilder
+Abstract base class for all datasets.
 
-[[autodoc]] datasets.GeneratorBasedBuilder
+    `DatasetBuilder` has 3 key methods:
 
-[[autodoc]] datasets.ArrowBasedBuilder
+        - [`DatasetBuilder.info`]: Documents the dataset, including feature
+          names, types, shapes, version, splits, citation, etc.
+        - [`DatasetBuilder.download_and_prepare`]: Downloads the source data
+          and writes it to disk.
+        - [`DatasetBuilder.as_dataset`]: Generates a [`Dataset`].
 
-[[autodoc]] datasets.BuilderConfig
+    Some `DatasetBuilder`s expose multiple variants of the
+    dataset by defining a [`BuilderConfig`] subclass and accepting a
+    config object (or name) on construction. Configurable datasets expose a
+    pre-defined set of configurations in [`DatasetBuilder.builder_configs`].
+
+    Args:
+        cache_dir (`str`, *optional*):
+            Directory to cache data. Defaults to `"~/.cache/huggingface/datasets"`.
+        dataset_name (`str`, *optional*):
+            Name of the dataset, if different from the builder name. Useful for packaged builders
+            like csv, imagefolder, audiofolder, etc. to reflect the difference between datasets
+            that use the same packaged builder.
+        config_name (`str`, *optional*):
+            Name of the dataset configuration.
+            It affects the data generated on disk. Different configurations will have their own subdirectories and
+            versions.
+            If not provided, the default configuration is used (if it exists).
+
+            <Added version="2.3.0">
+
+            Parameter `name` was renamed to `config_name`.
+
+            </Added>
+        hash (`str`, *optional*):
+            Hash specific to the dataset code. Used to update the caching directory when the
+            dataset loading script code is updated (to avoid reusing old data).
+            The typical caching directory (defined in `self._relative_data_dir`) is `name/version/hash/`.
+        base_path (`str`, *optional*):
+            Base path for relative paths that are used to download files.
+            This can be a remote URL.
+        features ([`Features`], *optional*):
+            Features types to use with this dataset.
+            It can be used to change the [`Features`] types of a dataset, for example.
+        token (`str` or `bool`, *optional*):
+            String or boolean to use as Bearer token for remote files on the
+            Datasets Hub. If `True`, will get token from `"~/.huggingface"`.
+        repo_id (`str`, *optional*):
+            ID of the dataset repository.
+            Used to distinguish builders with the same name but not coming from the same namespace, for example "squad"
+            and "lhoestq/squad" repo IDs. In the latter, the builder name would be "lhoestq___squad".
+        data_files (`str` or `Sequence` or `Mapping`, *optional*):
+            Path(s) to source data file(s).
+            For builders like "csv" or "json" that need the user to specify data files. They can be either
+            local or remote files. For convenience, you can use a `DataFilesDict`.
+        data_dir (`str`, *optional*):
+            Path to directory containing source data file(s).
+            Use only if `data_files` is not passed, in which case it is equivalent to passing
+            `os.path.join(data_dir, "**")` as `data_files`.
+            For builders that require manual download, it must be the path to the local directory containing the
+            manually downloaded data.
+        storage_options (`dict`, *optional*):
+            Key/value pairs to be passed on to the dataset file-system backend, if any.
+        writer_batch_size (`int`, *optional*):
+            Batch size used by the ArrowWriter.
+            It defines the number of samples that are kept in memory before writing them
+            and also the length of the arrow chunks.
+            None means that the ArrowWriter will use its default value.
+        **config_kwargs (additional keyword arguments): Keyword arguments to be passed to the corresponding builder
+            configuration class, set on the class attribute [`DatasetBuilder.BUILDER_CONFIG_CLASS`]. The builder
+            configuration class is [`BuilderConfig`] or a subclass of it.
+
+Base class for datasets with data generation based on dict generators.
+
+    `GeneratorBasedBuilder` is a convenience class that abstracts away much
+    of the data writing and reading of `DatasetBuilder`. It expects subclasses to
+    implement generators of feature dictionaries across the dataset splits
+    (`_split_generators`). See the method docstrings for details.
+
+Base class for datasets with data generation based on Arrow loading functions (CSV/JSON/Parquet).
+
+Base class for `DatasetBuilder` data configuration.
+
+    `DatasetBuilder` subclasses with data configuration options should subclass
+    `BuilderConfig` and add their own properties.
+
+    Attributes:
+        name (`str`, defaults to `default`):
+            The name of the configuration.
+        version (`Version` or `str`, defaults to `0.0.0`):
+            The version of the configuration.
+        data_dir (`str`, *optional*):
+            Path to the directory containing the source data.
+        data_files (`str` or `Sequence` or `Mapping`, *optional*):
+            Path(s) to source data file(s).
+        description (`str`, *optional*):
+            A human description of the configuration.
 
 ## Download
 
-[[autodoc]] datasets.DownloadManager
+No docstring found for datasets.DownloadManager
 
-[[autodoc]] datasets.StreamingDownloadManager
+Download manager that uses the "::" separator to navigate through (possibly remote) compressed archives.
+    Contrary to the regular `DownloadManager`, the `download` and `extract` methods don't actually download nor extract
+    data, but they rather return the path or url that could be opened using the `xopen` function which extends the
+    built-in `open` function to stream data from remote files.
 
-[[autodoc]] datasets.DownloadConfig
+Configuration for our cached path manager.
 
-[[autodoc]] datasets.DownloadMode
+    Attributes:
+        cache_dir (`str` or `Path`, *optional*):
+            Specify a cache directory to save the file to (overwrite the
+            default cache dir).
+        force_download (`bool`, defaults to `False`):
+            If `True`, re-dowload the file even if it's already cached in
+            the cache dir.
+        resume_download (`bool`, defaults to `False`):
+            If `True`, resume the download if an incompletely received file is
+            found.
+        proxies (`dict`, *optional*):
+        user_agent (`str`, *optional*):
+            Optional string or dict that will be appended to the user-agent on remote
+            requests.
+        extract_compressed_file (`bool`, defaults to `False`):
+            If `True` and the path point to a zip or tar file,
+            extract the compressed file in a folder along the archive.
+        force_extract (`bool`, defaults to `False`):
+            If `True` when `extract_compressed_file` is `True` and the archive
+            was already extracted, re-extract the archive and override the folder where it was extracted.
+        delete_extracted (`bool`, defaults to `False`):
+            Whether to delete (or keep) the extracted files.
+        extract_on_the_fly (`bool`, defaults to `False`):
+            If `True`, extract compressed files while they are being read.
+        use_etag (`bool`, defaults to `True`):
+            Whether to use the ETag HTTP response header to validate the cached files.
+        num_proc (`int`, *optional*):
+            The number of processes to launch to download the files in parallel.
+        max_retries (`int`, default to `1`):
+            The number of times to retry an HTTP request if it fails.
+        token (`str` or `bool`, *optional*):
+            Optional string or boolean to use as Bearer token
+            for remote files on the Datasets Hub. If `True`, or not specified, will get token from `~/.huggingface`.
+        storage_options (`dict`, *optional*):
+            Key/value pairs to be passed on to the dataset file-system backend, if any.
+        download_desc (`str`, *optional*):
+            A description to be displayed alongside with the progress bar while downloading the files.
+        disable_tqdm (`bool`, defaults to `False`):
+            Whether to disable the individual files download progress bar
+
+`Enum` for how to treat pre-existing downloads and data.
+
+    The default mode is `REUSE_DATASET_IF_EXISTS`, which will reuse both
+    raw downloads and the prepared dataset if they exist.
+
+    The generations modes:
+
+    |                                     | Downloads | Dataset |
+    |-------------------------------------|-----------|---------|
+    | `REUSE_DATASET_IF_EXISTS` (default) | Reuse     | Reuse   |
+    | `REUSE_CACHE_IF_EXISTS`             | Reuse     | Fresh   |
+    | `FORCE_REDOWNLOAD`                  | Fresh     | Fresh   |
 
 ## Verification
 
-[[autodoc]] datasets.VerificationMode
+`Enum` that specifies which verification checks to run.
+
+    The default mode is `BASIC_CHECKS`, which will perform only rudimentary checks to avoid slowdowns
+    when generating/downloading a dataset for the first time.
+
+    The verification modes:
+
+    |                           | Verification checks                                                           |
+    |---------------------------|------------------------------------------------------------------------------ |
+    | `ALL_CHECKS`              | Split checks, uniqueness of the keys yielded in case of the GeneratorBuilder  |
+    |                           | and the validity (number of files, checksums, etc.) of downloaded files       |
+    | `BASIC_CHECKS` (default)  | Same as `ALL_CHECKS` but without checking downloaded files                    |
+    | `NO_CHECKS`               | None                                                                          |
 
 ## Splits
 
-[[autodoc]] datasets.SplitGenerator
+Defines the split information for the generator.
 
-[[autodoc]] datasets.Split
+    This should be used as returned value of
+    `GeneratorBasedBuilder._split_generators`.
+    See `GeneratorBasedBuilder._split_generators` for more info and example
+    of usage.
 
-[[autodoc]] datasets.NamedSplit
+    Args:
+        name (`str`):
+            Name of the `Split` for which the generator will
+            create the examples.
+        **gen_kwargs (additional keyword arguments):
+            Keyword arguments to forward to the `DatasetBuilder._generate_examples` method
+            of the builder.
 
-[[autodoc]] datasets.NamedSplitAll
+    Example:
 
-[[autodoc]] datasets.ReadInstruction
+    ```py
+    >>> datasets.SplitGenerator(
+    ...     name=datasets.Split.TRAIN,
+    ...     gen_kwargs={"split_key": "train", "files": dl_manager.download_and_extract(url)},
+    ... )
+    ```
+
+`Enum` for dataset splits.
+
+    Datasets are typically split into different subsets to be used at various
+    stages of training and evaluation.
+
+    - `TRAIN`: the training data.
+    - `VALIDATION`: the validation data. If present, this is typically used as
+      evaluation data while iterating on a model (e.g. changing hyperparameters,
+      model architecture, etc.).
+    - `TEST`: the testing data. This is the data to report metrics on. Typically
+      you do not want to use this during model iteration as you may overfit to it.
+    - `ALL`: the union of all defined dataset splits.
+
+    All splits, including compositions inherit from `datasets.SplitBase`.
+
+    See the [guide](../load_hub#splits) on splits for more information.
+
+    Example:
+
+    ```py
+    >>> datasets.SplitGenerator(
+    ...     name=datasets.Split.TRAIN,
+    ...     gen_kwargs={"split_key": "train", "files": dl_manager.download_and extract(url)},
+    ... ),
+    ... datasets.SplitGenerator(
+    ...     name=datasets.Split.VALIDATION,
+    ...     gen_kwargs={"split_key": "validation", "files": dl_manager.download_and extract(url)},
+    ... ),
+    ... datasets.SplitGenerator(
+    ...     name=datasets.Split.TEST,
+    ...     gen_kwargs={"split_key": "test", "files": dl_manager.download_and extract(url)},
+    ... )
+    ```
+
+Descriptor corresponding to a named split (train, test, ...).
+
+    Example:
+        Each descriptor can be composed with other using addition or slice:
+
+            ```py
+            split = datasets.Split.TRAIN.subsplit(datasets.percent[0:25]) + datasets.Split.TEST
+            ```
+
+        The resulting split will correspond to 25% of the train split merged with
+        100% of the test split.
+
+        A split cannot be added twice, so the following will fail:
+
+            ```py
+            split = (
+                    datasets.Split.TRAIN.subsplit(datasets.percent[:25]) +
+                    datasets.Split.TRAIN.subsplit(datasets.percent[75:])
+            )  # Error
+            split = datasets.Split.TEST + datasets.Split.ALL  # Error
+            ```
+
+        The slices can be applied only one time. So the following are valid:
+
+            ```py
+            split = (
+                    datasets.Split.TRAIN.subsplit(datasets.percent[:25]) +
+                    datasets.Split.TEST.subsplit(datasets.percent[:50])
+            )
+            split = (datasets.Split.TRAIN + datasets.Split.TEST).subsplit(datasets.percent[:50])
+            ```
+
+        But this is not valid:
+
+            ```py
+            train = datasets.Split.TRAIN
+            test = datasets.Split.TEST
+            split = train.subsplit(datasets.percent[:25]).subsplit(datasets.percent[:25])
+            split = (train.subsplit(datasets.percent[:25]) + test).subsplit(datasets.percent[:50])
+            ```
+
+Descriptor corresponding to a named split (train, test, ...).
+
+    Example:
+        Each descriptor can be composed with other using addition or slice:
+
+            ```py
+            split = datasets.Split.TRAIN.subsplit(datasets.percent[0:25]) + datasets.Split.TEST
+            ```
+
+        The resulting split will correspond to 25% of the train split merged with
+        100% of the test split.
+
+        A split cannot be added twice, so the following will fail:
+
+            ```py
+            split = (
+                    datasets.Split.TRAIN.subsplit(datasets.percent[:25]) +
+                    datasets.Split.TRAIN.subsplit(datasets.percent[75:])
+            )  # Error
+            split = datasets.Split.TEST + datasets.Split.ALL  # Error
+            ```
+
+        The slices can be applied only one time. So the following are valid:
+
+            ```py
+            split = (
+                    datasets.Split.TRAIN.subsplit(datasets.percent[:25]) +
+                    datasets.Split.TEST.subsplit(datasets.percent[:50])
+            )
+            split = (datasets.Split.TRAIN + datasets.Split.TEST).subsplit(datasets.percent[:50])
+            ```
+
+        But this is not valid:
+
+            ```py
+            train = datasets.Split.TRAIN
+            test = datasets.Split.TEST
+            split = train.subsplit(datasets.percent[:25]).subsplit(datasets.percent[:25])
+            split = (train.subsplit(datasets.percent[:25]) + test).subsplit(datasets.percent[:50])
+            ```All
+
+Reading instruction for a dataset.
+
+    Examples::
+
+      # The following lines are equivalent:
+      ds = datasets.load_dataset('mnist', split='test[:33%]')
+      ds = datasets.load_dataset('mnist', split=datasets.ReadInstruction.from_spec('test[:33%]'))
+      ds = datasets.load_dataset('mnist', split=datasets.ReadInstruction('test', to=33, unit='%'))
+      ds = datasets.load_dataset('mnist', split=datasets.ReadInstruction(
+          'test', from_=0, to=33, unit='%'))
+
+      # The following lines are equivalent:
+      ds = datasets.load_dataset('mnist', split='test[:33%]+train[1:-1]')
+      ds = datasets.load_dataset('mnist', split=datasets.ReadInstruction.from_spec(
+          'test[:33%]+train[1:-1]'))
+      ds = datasets.load_dataset('mnist', split=(
+          datasets.ReadInstruction('test', to=33, unit='%') +
+          datasets.ReadInstruction('train', from_=1, to=-1, unit='abs')))
+
+      # The following lines are equivalent:
+      ds = datasets.load_dataset('mnist', split='test[:33%](pct1_dropremainder)')
+      ds = datasets.load_dataset('mnist', split=datasets.ReadInstruction.from_spec(
+          'test[:33%](pct1_dropremainder)'))
+      ds = datasets.load_dataset('mnist', split=datasets.ReadInstruction(
+          'test', from_=0, to=33, unit='%', rounding="pct1_dropremainder"))
+
+      # 10-fold validation:
+      tests = datasets.load_dataset(
+          'mnist',
+          [datasets.ReadInstruction('train', from_=k, to=k+10, unit='%')
+          for k in range(0, 100, 10)])
+      trains = datasets.load_dataset(
+          'mnist',
+          [datasets.ReadInstruction('train', to=k, unit='%') + datasets.ReadInstruction('train', from_=k+10, unit='%')
+          for k in range(0, 100, 10)])
 
 ## Version
 
-[[autodoc]] datasets.utils.Version
+Dataset version `MAJOR.MINOR.PATCH`.
+
+    Args:
+        version_str (`str`):
+            The dataset version.
+        description (`str`):
+            A description of what is new in this version.
+        major (`str`):
+        minor (`str`):
+        patch (`str`):
+
+    Example:
+
+    ```py
+    >>> VERSION = datasets.Version("1.0.0")
+    ```

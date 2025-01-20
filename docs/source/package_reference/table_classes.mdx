@@ -6,7 +6,14 @@ Several Table types are available, and they all inherit from [`table.Table`].
 
 ## Table
 
-[[autodoc]] datasets.table.Table
+Wraps a pyarrow Table by using composition.
+    This is the base class for `InMemoryTable`, `MemoryMappedTable` and `ConcatenationTable`.
+
+    It implements all the basic attributes/methods of the pyarrow Table class except
+    the Table transforms: `slice, filter, flatten, combine_chunks, cast, add_column,
+    append_column, remove_column, set_column, rename_columns` and `drop`.
+
+    The implementation of these methods differs for the subclasses.
     - validate
     - equals
     - to_batches
@@ -25,7 +32,17 @@ Several Table types are available, and they all inherit from [`table.Table`].
 
 ## InMemoryTable
 
-[[autodoc]] datasets.table.InMemoryTable
+The table is said in-memory when it is loaded into the user's RAM.
+
+    Pickling it does copy all the data using memory.
+    Its implementation is simple and uses the underlying pyarrow Table methods directly.
+
+    This is different from the `MemoryMapped` table, for which pickling doesn't copy all the
+    data in memory. For a `MemoryMapped`, unpickling instead reloads the table from the disk.
+
+    `InMemoryTable` must be used when data fit in memory, while `MemoryMapped` are reserved for
+    data bigger than memory or when you want the memory footprint of your application to
+    stay low.
     - validate
     - equals
     - to_batches
@@ -64,7 +81,23 @@ Several Table types are available, and they all inherit from [`table.Table`].
 
 ## MemoryMappedTable
 
-[[autodoc]] datasets.table.MemoryMappedTable
+The table is said memory mapped when it doesn't use the user's RAM but loads the data
+    from the disk instead.
+
+    Pickling it doesn't copy the data into memory.
+    Instead, only the path to the memory mapped arrow file is pickled, as well as the list
+    of transforms to "replay" when reloading the table from the disk.
+
+    Its implementation requires to store an history of all the transforms that were applied
+    to the underlying pyarrow Table, so that they can be "replayed" when reloading the Table
+    from the disk.
+
+    This is different from the `InMemoryTable` table, for which pickling does copy all the
+    data in memory.
+
+    `InMemoryTable` must be used when data fit in memory, while `MemoryMapped` are reserved for
+    data bigger than memory or when you want the memory footprint of your application to
+    stay low.
     - validate
     - equals
     - to_batches
@@ -98,7 +131,28 @@ Several Table types are available, and they all inherit from [`table.Table`].
 
 ## ConcatenationTable
 
-[[autodoc]] datasets.table.ConcatenationTable
+The table comes from the concatenation of several tables called blocks.
+    It enables concatenation on both axis 0 (append rows) and axis 1 (append columns).
+
+    The underlying tables are called "blocks" and can be either `InMemoryTable`
+    or `MemoryMappedTable` objects.
+    This allows to combine tables that come from memory or that are memory mapped.
+    When a `ConcatenationTable` is pickled, then each block is pickled:
+    - the `InMemoryTable` objects are pickled by copying all the data in memory.
+    - the MemoryMappedTable objects are pickled without copying the data into memory.
+    Instead, only the path to the memory mapped arrow file is pickled, as well as the list
+    of transforms to "replays" when reloading the table from the disk.
+
+    Its implementation requires to store each block separately.
+    The `blocks` attributes stores a list of list of blocks.
+    The first axis concatenates the tables along the axis 0 (it appends rows),
+    while the second axis concatenates tables along the axis 1 (it appends columns).
+
+    If some columns are missing when concatenating on axis 0, they are filled with null values.
+    This is done using `pyarrow.concat_tables(tables, promote=True)`.
+
+    You can access the fully combined table by accessing the `ConcatenationTable.table` attribute,
+    and the blocks by accessing the `ConcatenationTable.blocks` attribute.
     - validate
     - equals
     - to_batches
@@ -133,6 +187,24 @@ Several Table types are available, and they all inherit from [`table.Table`].
 
 ## Utils
 
-[[autodoc]] datasets.table.concat_tables
+Concatenate tables.
 
-[[autodoc]] datasets.table.list_table_cache_files
+    Args:
+        tables (list of `Table`):
+            List of tables to be concatenated.
+        axis (`{0, 1}`, defaults to `0`, meaning over rows):
+            Axis to concatenate over, where `0` means over rows (vertically) and `1` means over columns
+            (horizontally).
+
+            <Added version="1.6.0"/>
+    Returns:
+        `datasets.table.Table`:
+            If the number of input tables is > 1, then the returned table is a `datasets.table.ConcatenationTable`.
+            Otherwise if there's only one table, it is returned as is.
+
+Get the cache files that are loaded by the table.
+    Cache file are used when parts of the table come from the disk via memory mapping.
+
+    Returns:
+        `List[str]`:
+            A list of paths to the cache files loaded by the table.

@@ -30,29 +30,113 @@ In order from the least to the most verbose (with their corresponding `int` valu
 4. `logging.INFO` (int value, 20): reports error, warnings and basic information.
 5. `logging.DEBUG` (int value, 10): report all information.
 
-[[autodoc]] datasets.logging.get_verbosity
+```python
+def get_verbosity() -> int:
+```
 
-[[autodoc]] datasets.logging.set_verbosity
+Return the current level for the HuggingFace datasets library's root logger.
+    Returns:
+        Logging level, e.g., `datasets.logging.DEBUG` and `datasets.logging.INFO`.
 
-[[autodoc]] datasets.logging.set_verbosity_info
+    <Tip>
 
-[[autodoc]] datasets.logging.set_verbosity_warning
+        HuggingFace datasets library has following logging levels:
+        - `datasets.logging.CRITICAL`, `datasets.logging.FATAL`
+        - `datasets.logging.ERROR`
+        - `datasets.logging.WARNING`, `datasets.logging.WARN`
+        - `datasets.logging.INFO`
+        - `datasets.logging.DEBUG`
 
-[[autodoc]] datasets.logging.set_verbosity_debug
+    </Tip>
 
-[[autodoc]] datasets.logging.set_verbosity_error
+```python
+def set_verbosity(verbosity: int) -> None:
+```
 
-[[autodoc]] datasets.logging.disable_propagation
+Set the level for the Hugging Face Datasets library's root logger.
+    Args:
+        verbosity:
+            Logging level, e.g., `datasets.logging.DEBUG` and `datasets.logging.INFO`.
 
-[[autodoc]] datasets.logging.enable_propagation
+```python
+def set_verbosity(verbosity: int) -> None:
+```
+
+Set the level for the Hugging Face Datasets library's root logger.
+    Args:
+        verbosity:
+            Logging level, e.g., `datasets.logging.DEBUG` and `datasets.logging.INFO`._info
+
+```python
+def set_verbosity(verbosity: int) -> None:
+```
+
+Set the level for the Hugging Face Datasets library's root logger.
+    Args:
+        verbosity:
+            Logging level, e.g., `datasets.logging.DEBUG` and `datasets.logging.INFO`._warning
+
+```python
+def set_verbosity(verbosity: int) -> None:
+```
+
+Set the level for the Hugging Face Datasets library's root logger.
+    Args:
+        verbosity:
+            Logging level, e.g., `datasets.logging.DEBUG` and `datasets.logging.INFO`._debug
+
+```python
+def set_verbosity(verbosity: int) -> None:
+```
+
+Set the level for the Hugging Face Datasets library's root logger.
+    Args:
+        verbosity:
+            Logging level, e.g., `datasets.logging.DEBUG` and `datasets.logging.INFO`._error
+
+```python
+def disable_propagation() -> None:
+```
+
+Disable propagation of the library log outputs.
+    Note that log propagation is disabled by default.
+
+```python
+def enable_propagation() -> None:
+```
+
+Enable propagation of the library log outputs.
+    Please disable the Hugging Face datasets library's default handler to prevent double logging if the root logger has
+    been configured.
 
 ## Configure progress bars
 
 By default, `tqdm` progress bars will be displayed during dataset download and preprocessing. You can disable them globally by setting `HF_DATASETS_DISABLE_PROGRESS_BARS`
 environment variable. You can also enable/disable them using [`~utils.enable_progress_bars`] and [`~utils.disable_progress_bars`]. If set, the environment variable has priority on the helpers.
 
-[[autodoc]] datasets.utils.enable_progress_bars
+```python
+def enable_progress_bars() -> None:
+```
 
-[[autodoc]] datasets.utils.disable_progress_bars
+Enable globally progress bars used in `datasets` except if `HF_DATASETS_DISABLE_PROGRESS_BAR` environment
+    variable has been set.
 
-[[autodoc]] datasets.utils.are_progress_bars_disabled
+    Use [`~utils.disable_progress_bars`] to disable them.
+
+```python
+def disable_progress_bars() -> None:
+```
+
+Disable globally progress bars used in `datasets` except if `HF_DATASETS_DISABLE_PROGRESS_BAR` environment
+    variable has been set.
+
+    Use [`~utils.enable_progress_bars`] to re-enable them.
+
+```python
+def are_progress_bars_disabled() -> bool:
+```
+
+Return whether progress bars are globally disabled or not.
+
+    Progress bars used in `datasets` can be enable or disabled globally using [`~utils.enable_progress_bars`]
+    and [`~utils.disable_progress_bars`] or by setting `HF_DATASETS_DISABLE_PROGRESS_BAR` as environment variable.
